@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Notepad</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="./img/icon.png" />
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style type="text/css">
+html {
+	font-size: 14px;
+}
+</style>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<link rel="stylesheet"
+	href="https://opensource.keycdn.com/fontawesome/4.7.0/font-awesome.min.css">
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+<link rel="stylesheet" href="css/notepad/site.css">
+<link rel="stylesheet" href="css/notepad/richtext.min.css">
+<script src="js/notepad/jquery.richtext.js"></script>
+<script>
+	$(document).ready(function() {
+		$("#include_navbar").load("navbar.html");
+		$('.content').richText();
+
+		// Object that will contain the local state
+		var notepad = {};
+
+		// Create or update the todo localStorage entry
+		if (localStorage.getItem('notepad')) {
+			notepad = JSON.parse(localStorage.getItem('notepad'));
+		}
+
+		$("#open").click(function() {
+			var fileName = $('#fileName').text();
+			if (!(fileName === null || fileName === '')) {
+
+				bootbox.confirm({
+					message : "Do you want to save existing file ?!",
+					buttons : {
+						confirm : {
+							label : 'Yes',
+							className : 'btn-success'
+						},
+						cancel : {
+							label : 'No',
+							className : 'btn-danger'
+						}
+					},
+					callback : function(result) {
+						if (result) {
+							save();
+							open();
+						}
+					}
+				});
+			} else {
+				open();
+			}
+		});
+
+		function open() {
+			var files = Object.keys(notepad);
+			var keyForBootBox = [];
+			for (i = 0; i < files.length; i++) {
+				keyForBootBox[i] = {
+					text : files[i],
+					value : files[i]
+				}
+			}
+			if (keyForBootBox.length > 0) {
+				bootbox.prompt({
+					title : "Please select file!",
+					inputType : 'select',
+					inputOptions : keyForBootBox,
+					callback : function(result) {
+						$('.richText-editor').empty();
+						$('.richText-editor').prepend($(notepad[result]));
+						$('#fileName').text(result);
+					}
+				});
+			} else {
+				bootbox.alert("There is nothing to open!");
+			}
+		}
+
+		$("#save").click(save);
+		function save() {
+			var fileName = $('#fileName').text();
+			if (fileName === null || fileName === '') {
+				bootbox.prompt("File Name:", function(result) {
+					fileName = result;
+					notepad[fileName] = $('.richText-editor').html();
+					// Store the latest `notepad` object for next reload
+					localStorage.setItem('notepad', JSON.stringify(notepad));
+					bootbox.alert("File Saved successfully!");
+				});
+			} else {
+				notepad[fileName] = $('.richText-editor').html();
+				// Store the latest `notepad` object for next reload
+				localStorage.setItem('notepad', JSON.stringify(notepad));
+				bootbox.alert("File Saved successfully!");
+			}
+		}
+
+		$("#new").click(function() {
+			var content = $('.richText-editor').text();
+			if (!(content === null || content === '')) {
+				bootbox.confirm({
+					message : "Do you want to save existing file ?!",
+					buttons : {
+						confirm : {
+							label : 'Yes',
+							className : 'btn-success'
+						},
+						cancel : {
+							label : 'No',
+							className : 'btn-danger'
+						}
+					},
+					callback : function(result) {
+						if (result) {
+							save();
+						}
+						$('.richText-editor').text('');
+						$('#fileName').text('');
+					}
+				});
+			} else {
+				$('.richText-editor').text('');
+				$('#fileName').text('');
+			}
+
+		});
+	});
+</script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div id="include_navbar"></div>
+		<br />
+		<h2>Notepad</h2>
+		<br />
+		<div class="btn-group" role="group" aria-label="Basic example">
+			<button type="button" id="new" class="btn btn-secondary">New</button>
+			<button type="button" id="open" class="btn btn-secondary">Open</button>
+			<button type="button" id="save" class="btn btn-secondary">Save</button>
+		</div>
+		<br /> <br />
+		<h4>
+			File Name: <span id="fileName"></span>
+		</h4>
+		<div class="page-wrapper box-content" id="frame">
+			<textarea class="content" id="notepad" name="notepad"></textarea>
+		</div>
+	</div>
+</body>
+</html>

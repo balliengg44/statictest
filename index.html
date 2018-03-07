@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My To-do</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="./img/icon.png" />
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.css">
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css">
+<link rel="stylesheet"
+	href="https://editor.datatables.net/extensions/Editor/css/editor.bootstrap4.min.css">
+<style type="text/css">
+html {
+	font-size: 14px;
+}
+
+.lightGreen {
+	background-color: #C1F0C1 !important
+}
+
+.lightRed {
+	background-color: #f0aaaa !important
+}
+
+.modal-dialog {
+	max-width: 800px;
+}
+
+textarea {
+	height: 200px;
+}
+</style>
+</head>
+<body>
+	<div class="container-fluid">
+
+		<div id="include_navbar"></div>
+
+		<br />
+		<h2>To-do</h2>
+		<br />
+		<div class="table-responsive">
+			<table id="example"
+				style="width: 100%; border-collapse: collapse; border-spacing: 0;"
+				class="table table-striped table-bordered table-sm">
+				<thead>
+					<tr>
+						<th>Item</th>
+						<th style="max-width: 500px;">Details</th>
+						<th>Category</th>
+						<th>Priority</th>
+						<th>Due_Date</th>
+						<th>Status</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</div>
+</body>
+<script type="text/javascript"
+	src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.bootstrap4.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/select/1.2.5/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="./js/dataTables.editor.min.js"></script>
+<script type="text/javascript"
+	src="https://editor.datatables.net/extensions/Editor/js/editor.bootstrap4.min.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.colVis.min.js"></script>
+
+<script type="text/javascript">
+	var editor; // use a global for the submit and return data rendering in the examples
+
+	$(document)
+			.ready(
+					function() {
+
+						$("#include_navbar").load("navbar.html");
+
+						// Object that will contain the local state
+						var todo = {};
+
+						// Create or update the todo localStorage entry
+						if (localStorage.getItem('todo')) {
+							todo = JSON.parse(localStorage.getItem('todo'));
+						}
+
+						// Set up the editor
+						editor = new $.fn.dataTable.Editor({
+							table : "#example",
+							fields : [
+									{
+										label : "Item:",
+										name : "item"
+									},
+									{
+										type : "textarea",
+										label : "Details:",
+										name : "details"
+									},
+									{
+										type : "select",
+										label : "Category:",
+										name : "category",
+										options : [ "Office", "Personal" ]
+									},
+									{
+										type : "select",
+										label : "Priority:",
+										name : "priority",
+										options : [ "", "Low", "Medium",
+												"High", "Critical" ]
+									},
+									{
+										label : 'Due date:',
+										name : 'due_date',
+										type : 'datetime',
+										def : function() {
+											return new Date();
+										},
+										dateFormat : 'D MMM YYYY'
+									},
+									{
+										label : "Status:",
+										name : "status",
+										type : "select",
+										def : "To do",
+										options : [ 'To do', 'On Hold',
+												'In progress', 'Done' ]
+									} ],
+							ajax : function(method, url, d, successCallback,
+									errorCallback) {
+								var output = {
+									data : []
+								};
+
+								if (d.action === 'create') {
+									// Create new row(s), using the current time and loop index as
+									// the row id
+									var dateKey = +new Date();
+
+									$.each(d.data, function(key, value) {
+										var id = dateKey + '' + key;
+
+										value.DT_RowId = id;
+										todo[id] = value;
+										output.data.push(value);
+									});
+								} else if (d.action === 'edit') {
+									// Update each edited item with the data submitted
+									$.each(d.data, function(id, value) {
+										value.DT_RowId = id;
+										$.extend(todo[id], value);
+										output.data.push(todo[id]);
+									});
+								} else if (d.action === 'remove') {
+									// Remove items from the object
+									$.each(d.data, function(id) {
+										delete todo[id];
+									});
+								}
+
+								// Store the latest `todo` object for next reload
+								localStorage.setItem('todo', JSON
+										.stringify(todo));
+
+								// Show Editor what has changed
+								successCallback(output);
+							}
+						});
+
+						//dependency managemnet
+						/* editor.dependent('options', function(val) {
+							return val === 'Simple' ? {
+								hide : [ 'position', 'office', 'extn', 'start_date', 'salary' ]
+							} : {
+								show : [ 'position', 'office', 'extn', 'start_date', 'salary' ]
+							};
+						}); */
+
+						//Validation
+						editor.on('preSubmit', function(e, o, action) {
+							if (action !== 'remove') {
+								var item = this.field('item');
+								requiredCheck(item);
+								lengthCheck(item, 50);
+
+								var details = this.field('details');
+								requiredCheck(details);
+								lengthCheck(details, 1000);
+
+								var priority = this.field('priority');
+								requiredCheck(priority);
+
+								// If any error was reported, cancel the submission so it can be corrected
+								if (this.inError()) {
+									return false;
+								}
+							}
+						});
+
+						function requiredCheck(str) {
+							if (!str.isMultiValue()) {
+								if (!str.val()) {
+									str.error('This field is required');
+									return false;
+								}
+							}
+						}
+
+						function lengthCheck(str, length) {
+							if (!str.isMultiValue()) {
+								if (str.val().length >= length) {
+									str.error('The length must be less than '
+											+ length + ' characters');
+									return false;
+								}
+							}
+						}
+
+						// Initialise the DataTable
+						var datatable = $('#example')
+								.DataTable(
+										{
+											dom : "Bfrtip",
+											data : $.map(todo, function(value,
+													key) {
+												return value;
+											}),
+											columns : [ {
+												data : "item"
+											}, {
+												data : "details"
+											}, {
+												data : "category"
+											}, {
+												data : "priority"
+											}, {
+												data : "due_date"
+											}, {
+												data : "status"
+											} ],
+											"rowCallback" : function(row, data,
+													dataIndex) {
+												if (data['status'] == "Done") {
+													$(row).addClass(
+															'lightGreen');
+												} else if (new Date(
+														data['due_date']) <= new Date()
+														|| data['priority'] == "High") {
+													$(row).addClass('lightRed');
+												}
+											},
+											select : true,
+											stateSave : true,
+											buttons : [
+													{
+														extend : "create",
+														key : {
+															shiftKey : true,
+															key : 'n'
+														},
+														editor : editor
+													},
+													{
+														extend : "edit",
+														key : {
+															shiftKey : true,
+															key : 'u'
+														},
+														editor : editor
+													},
+													{
+														extend : "remove",
+														key : {
+															shiftKey : true,
+															key : 'd'
+														},
+														editor : editor
+													},
+													{
+														extend : 'collection',
+														text : 'Options',
+														autoClose : true,
+														buttons : [ 'copy',
+																'csv', 'excel',
+																'pdf', 'print' ]
+													},
+													{
+														extend : 'collection',
+														text : 'Columns',
+														buttons : [ 'columnsToggle' ]
+													} ]
+										});
+
+					});
+</script>
+</html>
+
+
