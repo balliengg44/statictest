@@ -18,5 +18,9 @@
   Monolithic in nature
   More cost-effective
   Software size is bigger
-5.
+5.SOA can be
+  A.monolith
+  B.comprised of multiple microservices
+  A & B
+6.
   
