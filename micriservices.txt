@@ -3,4 +3,14 @@
   designing pattern
   programming language
   product
-2.
+2.Which of the following is not a characteristic of microservices?
+  Loosely coupled
+  Independently deployable
+  Highly maintainable and testable
+  Large in size-True
+3.Wich of the following is the disadvantage of microservice architecture?
+  High Cost-true
+  Large in size
+  Tightly coupled
+  Hard to deploy
+4.
